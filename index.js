@@ -1,18 +1,38 @@
+/* mico is an flexible and extensible cms engine written as application for the
+ * mikenchin application server.
+ * Copyright (C) 2013  mikanda IT Solutions
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+
 /*jslint nomen: true, plusplus: true */
 'use strict';
-
-/* mico uses a template cache. */
-
-var templateCache = {};
-module.exports = function (app, configuration) {
+module.exports = function (app, configuration, namespace, callback) {
     var fs = require('fs'),
         sprintf = require('sprintf').sprintf,
         jade = require('jade'),
         async = require('async'),
-        nano = require('nano');
-    nano = nano(configuration.database.host
-                           + '/'
-                           + configuration.database.name);
+        express = require('express'),
+        Nanu = require('nanu').Nanu,
+        nanu = new Nanu(configuration.database.name,
+                        configuration.database.host);
+
+    /* Since every application gets its own express engine we can safely set
+     * the view parameter to utilize the render engine. */
+
+    app.set('views', configuration.views);
+    app.set('view engine', 'jade');
+    app.use(express.favicon());
     app.get('/attachment/:id/:name', function (req, res, next) {
         req.nano.attachment.get(req.params.id, req.params.name, {}).pipe(res);
     });
@@ -57,33 +77,8 @@ module.exports = function (app, configuration) {
      * database for a suitable document to be served. */
 
     app.get('/:page', function (req, res, next) {
-        var page = req.params.page,
-            renderTemplate = function (template, config) {
-                var templatePath
-                        = configuration.views + '/' + template + '.jade',
-                    cacheEntry = templateCache[templatePath];
-                fs.stat(templatePath, function (error, stat) {
-                    if (error) {
-                        next(error);
-                    } else if (cacheEntry
-                                   && cacheEntry.timestamp >= stat.mtime) {
-                        res.end(cacheEntry.fn(config));
-                    } else {
-                        fs.readFile(templatePath, function (error, file) {
-                            var fn;
-                            if (error) {
-                                next(error);
-                            }
-                            cacheEntry = templateCache[templatePath] = {
-                                fn: jade.compile(file),
-                                timestamp: new Date()
-                            };
-                            res.end(cacheEntry.fn(config));
-                        });
-                    }
-                });
-            };
-        return req.nano.view('mikenchin', 'all-pages-by-name', {
+        var page = req.params.page;
+        return nanu.design('mico').view('all-pages-by-name', {
             key: page
         }, function (error, couchres) {
             var proto = '__proto__',
@@ -91,24 +86,11 @@ module.exports = function (app, configuration) {
                 key,
                 fn;
             if (error) {
-                res.send(error);
-                res.end();
+                res.status(404).send(error);
             } else if ((page = couchres.rows[0]) !== undefined) {
                 page = page.value;
                 config = page;
                 config[proto] = app.locals;
-
-                /* The page content can be written in various formats.  At the
-                 * moment we support markdown and jade.  The name of the
-                 * desired engine should be given in the `format' key. */
-
-                if (req.locals) {
-                    for (key in req.locals) {
-                        if (req.locals.hasOwnProperty(key)) {
-                            page[key] = req.locals[key];
-                        }
-                    }
-                }
 
                 /* Each page template gets a function called `attachment'
                  * with which it can render a link to an attachment. */
@@ -120,7 +102,7 @@ module.exports = function (app, configuration) {
                         attachment = id;
                         id = page._id;
                     }
-                    return '/attachment/' + id + '/' + attachment;
+                    return namespace + 'attachment/' + id + '/' + attachment;
                 };
                 for (key in page) {
                     if (page.hasOwnProperty(key)) {
@@ -144,9 +126,38 @@ module.exports = function (app, configuration) {
                         }
                     }
                 }
+                config[proto] = app.locals;
+                res.render(page.extend, config);
             }
-            config[proto] = app.locals;
-            renderTemplate(page.extend, config);
         });
     });
+    if (typeof configuration.options === 'object') {
+        async.map(
+            configuration.options,
+            nanu.get.bind(nanu),
+            function (errs, results) {
+                if (errs) {
+                    callback(errs);
+                } else {
+                    results.forEach(function (result) {
+                        var s = {},
+                            key;
+                        for (key in result) {
+                            if (result.hasOwnProperty(key)
+                                && !(
+                                    key[0] === '_'
+                                        || key === 'couchapp')
+                               ) {
+                                   s[key] = result[key];
+                               }
+                        }
+                        app.locals(s);
+                    });
+                    callback();
+                }
+            }
+        );
+    } else {
+        callback();
+    }
 };
