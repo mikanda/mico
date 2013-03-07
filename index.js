@@ -17,15 +17,18 @@
 
 /*jslint nomen: true, plusplus: true */
 'use strict';
-module.exports = function (app, configuration, namespace, callback) {
+module.exports = function (app, ctx, callback) {
   var fs = require('fs'),
       sprintf = require('sprintf').sprintf,
       jade = require('jade'),
       async = require('async'),
       express = require('express'),
       Nanu = require('nanu').Nanu,
+      configuration = ctx.configuration,
+      namespace = ctx.namespace,
       nanu = new Nanu(configuration.database.name,
                       configuration.database.host);
+
 
   /* Since every application gets its own express engine we can safely set
    * the view parameter to utilize the render engine. */
