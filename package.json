@@ -1,19 +1,9 @@
 {
-  "name": "mico",
-  "version": "0.0.0",
-  "description": "ERROR: No README.md file found!",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": "",
-  "author": "mikanda IT Solutions",
-  "license": "GPL",
-    "dependencies": {
-      "express": "*",
-      "nanu": "*",
-      "sprintf": "x",
-      "jade": "x",
-      "async": "x"
-    }
+  "dependencies": {
+    "express": "*",
+    "nanu": "*",
+    "sprintf": "x",
+    "jade": "x",
+    "async": "x"
+  }
 }

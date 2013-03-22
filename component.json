@@ -1,0 +1,14 @@
+{
+  "name": "mico",
+  "version": "0.0.1",
+  "dependencies": {
+    "mikanda/mikenchin-nanu": "*",
+    "mikanda/routes": "*"
+  },
+  "scripts": [
+    "index.js"
+  ],
+  "files": [
+    "package.json"
+  ]
+}
