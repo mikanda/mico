@@ -1,7 +1,10 @@
 {
+  "name": "mico",
+  "version": "0.0.1",
   "dependencies": {
     "express": "*",
-    "nanu": "*",
+    "mikenchin-nanu": "*",
+    "mikenchin-routes": "*",
     "sprintf": "x",
     "jade": "x",
     "async": "x"
