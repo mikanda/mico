@@ -1,7 +1,0 @@
-{
-  "name": "mico",
-  "dependencies": {
-    "mikenchin-nanu": "*",
-    "mikenchin-routes": "*"
-  }
-}
