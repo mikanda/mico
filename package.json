@@ -3,10 +3,11 @@
   "version": "0.0.1-1",
   "dependencies": {
     "express": "~3.1.1",
-    "mikenchin-nanu": "*",
-    "mikenchin-routes": "*",
+    "mikenchin-nanu": "~0.1.0-0",
+    "mikenchin-routes": "~0.1.0-0",
     "sprintf": "~0.1.1",
     "jade": "~0.28.2",
-    "async": "~0.2.7"
+    "async": "~0.2.7",
+    "mikenchin-express": "0.0.2"
   }
 }
